@@ -38,6 +38,7 @@ class HumanRouted(TicketOutput):
 
 print("Schemas loaded successfully.")
 
+"""
 valid_ticket = HumanRouted(
     input="my order hasn't arrived in 2 weeks",
     category=Category.ORDER_ISSUE,
@@ -57,3 +58,4 @@ try:
     )
 except Exception as e:
     print("Validation correctly failed:", e)
+"""
