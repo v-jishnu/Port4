@@ -25,7 +25,7 @@ class Teams(str, Enum):
 
 class TicketOutput(BaseModel):
     """Pydantic model for a support ticket."""
-    input: str
+    input: str = Field(..., description="the original ticket text, verbatim, unmodified")
     category: Category
     priority: Priority
     team: Teams

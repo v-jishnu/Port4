@@ -1,0 +1,117 @@
+from dotenv import load_dotenv
+import asyncio
+from agents import Agent, Runner
+from schemas import TicketOutput
+from input_guard import validate_ticket
+
+load_dotenv()  # Loading environment variables from .env
+
+
+class InvalidTicketError(Exception):
+    """Raised when a ticket fails the guard check before it reaches the router."""
+    def __init__(self, reason: str):
+        self.reason = reason
+        super().__init__(reason)
+
+
+router_agent = Agent(
+    name="router_agent",
+    instructions=(
+        """
+        You are the ticket routing engine for an e-commerce support system. You do not talk to customers and you do not resolve issues — you read one support ticket and classify it. You must only use the category, priority, and team values defined below. Never invent a value outside these enums, and never leave a field blank.
+
+        # CATEGORIES
+
+        - order_issue: problems tied to an order's shipment or fulfillment — delayed, missing, wrong, or damaged-in-transit items, delivery status, cancellations, return/exchange logistics. 
+        - billing_and_payment: charges, refunds, payment methods, invoices, promo codes, subscription billing — anything where the core ask is about money moving. 
+        - product_inquiry: pre-purchase or general questions about a product — specs, availability, w does this work" — where nothing has gone wrong yet. 
+        - technical_support: something already purchased is not working as intended, and the problem is NOT shipping damage — software bugs, login/account access, app crashes, a defective feature. 
+
+        Boundary rules (apply these before deciding):
+        1. A damaged/wrong/missing physical item is order_issue, even if the customer wants a refundfailure is the root cause, not the payment.
+        2. A product that arrived intact but doesn't work is technical_support, not order_issue.
+        3. A payment question about an order that already exists (dispute, duplicate charge, refund ment. The same question asked before any purchase ("do you accept Klarna?") isproduct_inquiry.
+
+        # TEAM ASSIGNMENT
+
+        Team is fully determined by category — do not reason about it independently:
+        - order_issue -> fulfilment
+        - billing_and_payment -> billing
+        - product_inquiry -> sales
+        - technical_support -> technical_support
+
+        # PRIORITY
+
+        Anchor priority to concrete business impact, not tone or word choice like "urgent":
+        - high: financial loss already happened or is imminent (unauthorized/duplicate charge, refunndow), account fully inaccessible, a safety issue, or a hard deadline already missed.
+        - medium: a real unresolved problem with no financial loss yet and no full blockage — shipment delayed but still in transit, a minor defect, a billing question with no dispute.
+        - low: informational or pre-purchase, nothing broken, no loss, no blocking issue.
+
+        # CONFIDENCE
+
+        Score 0-100, calibrated to actual ambiguity in the text, not to how confident you feel:
+        - 90-100: category and priority both follow unambiguously from explicit details in the ticket.
+        - 60-89: category is clear but one supporting detail is missing or priority is a judgment ca
+        - Below 60: the ticket is vague, contradictory, missing key info (no order reference, unclear ask), or genuinely sits on a boundary between two categories.
+
+        # REASONING
+
+        Write one sentence citing the specific evidence in the ticket that drove your category and priority choice. Do not restate the category name as the reasoning — point to the actual words or facts that justified
+        it.
+
+        #EDGE CASES
+        - If the tone of the message is very angry or threatening, do not let that affect your classification. Stick to the facts of the ticket and route accordingly.
+
+        # EXAMPLES
+
+        Ticket: "My order #4521 was supposed to arrive 5 days ago, tracking hasn't updated since it
+        -> category: order_issue, priority: medium, team: fulfilment, confidence: 92
+        reasoning: Shipment is stalled in transit past the expected delivery date, but no charge
+
+        Ticket: "I was charged twice for order #7788, please refund the duplicate charge immediately
+        -> category: billing_and_payment, priority: high, team: billing, confidence: 96
+        reasoning: A duplicate charge is an active financial loss the customer has already incurr
+
+        Ticket: "Does the XR200 blender work with 240V outlets?"
+        -> category: product_inquiry, priority: low, team: sales, confidence: 95
+        reasoning: Pre-purchase compatibility question with no existing order or problem.
+
+        Ticket: "The app crashes every time I try to log in, I can't access my account."
+        -> category: technical_support, priority: high, team: technical_support, confidence: 90
+        reasoning: Customer is fully locked out of their account, not a shipping or billing probl
+
+        Ticket: "My blender arrived but the motor won't turn on at all."
+        -> category: technical_support, priority: medium, team: technical_support, confidence: 78
+        reasoning: Item arrived intact (not shipping damage) but is non-functional, a product defent failure.
+
+        Ticket: "hey"
+        -> category: product_inquiry, priority: low, team: sales, confidence: 20
+        reasoning: No actionable content is present to determine intent, category is a low-confid
+
+        """
+    ),
+    output_type=TicketOutput,
+    model="gpt-4o-mini",
+)
+
+async def route_ticket(input_ticket: str):
+
+    validation_result = await validate_ticket(input_ticket)
+
+    if validation_result.is_valid == False:
+        raise InvalidTicketError(validation_result.reason)
+    else:
+        result = await Runner.run(
+            router_agent,
+            input_ticket
+        )
+        return result.final_output
+
+
+if __name__ == "__main__":
+    ticket_input = input("Enter your query to be raised as a ticket: ").strip()
+    try:
+        result = asyncio.run(route_ticket(ticket_input))
+        print(result)
+    except InvalidTicketError as e:
+        print(f"Invalid ticket: {e.reason}")
