@@ -51,7 +51,7 @@ router_agent = Agent(
 
         Score 0-100, calibrated to actual ambiguity in the text, not to how confident you feel:
         - 90-100: category and priority both follow unambiguously from explicit details in the ticket.
-        - 60-89: category is clear but one supporting detail is missing or priority is a judgment ca
+        - 60-89: category is clear but one supporting detail is missing, or the priority call sits between two adjacent tiers (e.g. medium vs. high) rather than following unambiguously.
         - Below 60: the ticket is vague, contradictory, missing key info (no order reference, unclear ask), or genuinely sits on a boundary between two categories.
 
         # REASONING
