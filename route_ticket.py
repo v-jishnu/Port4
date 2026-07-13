@@ -100,12 +100,24 @@ async def route_ticket(input_ticket: str):
 
     if validation_result.is_valid == False:
         raise InvalidTicketError(validation_result.reason)
+    # error logging for transient issues with the LLM or Runner or Server
     else:
-        result = await Runner.run(
-            router_agent,
-            input_ticket
-        )
-        return result.final_output
+        try:
+            result = await Runner.run(
+                router_agent,
+                input_ticket
+            )
+            return result.final_output
+        except Exception as e:
+            fallback_ticket = TicketOutput(
+                input=input_ticket,
+                category="product_inquiry",
+                priority="low",
+                team="sales",
+                confidence=0,
+                reasoning="Fallback due to routing error."  
+            )
+            return fallback_ticket  
 
 
 if __name__ == "__main__":
