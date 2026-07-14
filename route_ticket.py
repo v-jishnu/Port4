@@ -1,9 +1,11 @@
 from dotenv import load_dotenv
 import asyncio
-from agents import Agent, Runner
+from agents import Agent, Runner, ModelSettings
 from schemas import TicketOutput
 from input_guard import validate_ticket
+from ticket_log import insert_ticket, init_db
 
+init_db()  # Initialize the database and create the tickets table if it doesn't exist
 load_dotenv()  # Loading environment variables from .env
 
 
@@ -93,6 +95,7 @@ router_agent = Agent(
     ),
     output_type=TicketOutput,
     model="gpt-4o-mini",
+    model_settings=ModelSettings(temperature=0),
 )
 
 async def route_ticket(input_ticket: str):
@@ -101,24 +104,34 @@ async def route_ticket(input_ticket: str):
 
     if validation_result.is_valid == False:
         raise InvalidTicketError(validation_result.reason)
-    # error logging for transient issues with the LLM or Runner or Server
     else:
         try:
             result = await Runner.run(
                 router_agent,
                 input_ticket
             )
-            return result.final_output
+            classified_ticket = result.final_output
         except Exception as e:
-            fallback_ticket = TicketOutput(
+            classified_ticket = TicketOutput(
                 input=input_ticket,
                 category="product_inquiry",
                 priority="low",
                 team="sales",
                 confidence=0,
-                reasoning="Fallback due to routing error."  
+                reasoning="Fallback due to routing error.",
             )
-            return fallback_ticket  
+            try:
+                insert_ticket(classified_ticket, source="fallback")
+            except Exception as log_error:
+                print(f"Warning: failed to log fallback ticket to ticket_log: {log_error}")
+            return classified_ticket
+
+        try:
+            insert_ticket(classified_ticket, source="llm")
+        except Exception as e:
+            print(f"Warning: failed to log ticket to ticket_log: {e}")
+
+        return classified_ticket
 
 
 if __name__ == "__main__":

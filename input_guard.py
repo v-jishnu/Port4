@@ -1,7 +1,7 @@
 import asyncio
 from pydantic import BaseModel, Field
 from dotenv import load_dotenv
-from agents import Agent, Runner
+from agents import Agent, Runner, ModelSettings
 
 load_dotenv()  # Loading environment variables from .env
 
@@ -23,6 +23,7 @@ guardrail_agent = Agent(
     ),
     output_type=ValidTicket,
     model="gpt-4o-mini",
+    model_settings=ModelSettings(temperature=0),
 )
 
 
@@ -30,7 +31,6 @@ async def validate_ticket(ticket_input: str)-> ValidTicket:
 
     # manual validation for ticket length
     if(len(ticket_input.strip()) == 0 or len(ticket_input) > 500):
-        print("Invalid ticket: Ticket is either empty or too long (greater than 500 characters).")
         return ValidTicket(input=ticket_input, is_valid=False, reason="Ticket is either empty or too long.")
 
     
