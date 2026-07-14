@@ -61,6 +61,7 @@ router_agent = Agent(
 
         #EDGE CASES
         - If the tone of the message is very angry or threatening, do not let that affect your classification. Stick to the facts of the ticket and route accordingly.
+        - Multi-issue tickets: if a ticket describes two or more distinct issues that would map to different categories, classify category, priority, and team based on whichever issue carries the higher priority under the rubric above — every other field works exactly as it would for a single-issue ticket. In reasoning, explicitly break out the other issue by name: state which category/team the primary classification is for, then note the secondary issue and which category/team it belongs to, e.g. "Routed to billing for the uncredited refund (higher priority); also involves technical_support due to the app crashing, which will need separate follow-up." Confidence for these tickets should generally fall in the 60-89 band, since no single category is a complete fit for the whole message.
 
         # EXAMPLES
 
