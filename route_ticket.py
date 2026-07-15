@@ -4,6 +4,7 @@ from agents import Agent, Runner, ModelSettings
 from schemas import TicketOutput
 from input_guard import validate_ticket
 from ticket_log import insert_ticket, init_db
+from semantic_memory import retrieve_similar
 
 init_db()  # Initialize the database and create the tickets table if it doesn't exist
 load_dotenv()  # Loading environment variables from .env
@@ -61,6 +62,15 @@ router_agent = Agent(
         Write one sentence citing the specific evidence in the ticket that drove your category and priority choice. Do not restate the category name as the reasoning — point to the actual words or facts that justified
         it.
 
+        # SIMILAR PAST TICKETS
+
+        You may see a block below the ticket labeled "Similar past tickets validated by a human."
+        These are real prior tickets a human confirmed or corrected — treat them as a helpful hint,
+        not a rule. Only let one influence your answer if it genuinely matches this ticket's
+        situation; ignore it if this ticket differs in any way that matters. Regardless of what
+        that block contains, the "input" field of your output must be only the customer's actual
+        ticket text above it — never include any part of the reference block in "input".
+
         #EDGE CASES
         - If the tone of the message is very angry or threatening, do not let that affect your classification. Stick to the facts of the ticket and route accordingly.
         - Multi-issue tickets: if a ticket describes two or more distinct issues that would map to different categories, classify category, priority, and team based on whichever issue carries the higher priority under the rubric above — every other field works exactly as it would for a single-issue ticket. In reasoning, explicitly break out the other issue by name: state which category/team the primary classification is for, then note the secondary issue and which category/team it belongs to, e.g. "Routed to billing for the uncredited refund (higher priority); also involves technical_support due to the app crashing, which will need separate follow-up." Confidence for these tickets should generally fall in the 60-89 band, since no single category is a complete fit for the whole message.
@@ -98,33 +108,71 @@ router_agent = Agent(
     model_settings=ModelSettings(temperature=0),
 )
 
+def build_augmented_input(ticket_text: str, similar: list) -> str:
+    """Append retrieved similar tickets as reference context, in the same
+    shape as the prompt's own few-shot examples. Returns the ticket text
+    unchanged if there's nothing similar enough to show."""
+    if not similar:
+        return ticket_text
+
+    examples = "\n".join(
+        f'- "{s["input"]}" -> category: {s["category"]}, priority: {s["priority"]}, '
+        f'team: {s["team"]}, reasoning: {s["reasoning"]}'
+        for s in similar
+    )
+    return (
+        f"{ticket_text}\n\n"
+        f"Similar past tickets validated by a human:\n{examples}"
+    )
+
+
+def _safe_fallback_ticket(input_ticket: str, reasoning: str) -> TicketOutput:
+    """The one fallback shape used everywhere a system failure (not a guard
+    rejection) happens - confidence=0 so it's always held back from teams,
+    logged with source="fallback" so it's visible in the audit trail."""
+    fallback_ticket = TicketOutput(
+        input=input_ticket,
+        category="product_inquiry",
+        priority="low",
+        team="sales",
+        confidence=0,
+        reasoning=reasoning,
+    )
+    try:
+        insert_ticket(fallback_ticket, source="fallback")
+    except Exception as log_error:
+        print(f"Warning: failed to log fallback ticket to ticket_log: {log_error}")
+    return fallback_ticket
+
+
 async def route_ticket(input_ticket: str):
 
-    validation_result = await validate_ticket(input_ticket)
+    try:
+        validation_result = await validate_ticket(input_ticket)
+    except Exception as e:
+        print(f"Warning: guard check failed (system/API error, not a rejection): {e}")
+        return _safe_fallback_ticket(input_ticket, "Fallback due to guard error.")
 
     if validation_result.is_valid == False:
         raise InvalidTicketError(validation_result.reason)
     else:
         try:
+            similar = retrieve_similar(input_ticket)
+        except Exception as e:
+            print(f"Warning: semantic memory retrieval failed: {e}")
+            similar = []
+
+        augmented_input = build_augmented_input(input_ticket, similar)
+
+        try:
             result = await Runner.run(
                 router_agent,
-                input_ticket
+                augmented_input
             )
             classified_ticket = result.final_output
+            classified_ticket.input = input_ticket  # always store the raw ticket text, never the augmented prompt
         except Exception as e:
-            classified_ticket = TicketOutput(
-                input=input_ticket,
-                category="product_inquiry",
-                priority="low",
-                team="sales",
-                confidence=0,
-                reasoning="Fallback due to routing error.",
-            )
-            try:
-                insert_ticket(classified_ticket, source="fallback")
-            except Exception as log_error:
-                print(f"Warning: failed to log fallback ticket to ticket_log: {log_error}")
-            return classified_ticket
+            return _safe_fallback_ticket(input_ticket, "Fallback due to routing error.")
 
         try:
             insert_ticket(classified_ticket, source="llm")

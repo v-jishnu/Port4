@@ -1,6 +1,7 @@
 import argparse
 import asyncio
 from ticket_log import flag_to_admin, boost_confidence, get_admin_queue, get_team_queue, get_ticket_by_id, admin_correct
+from semantic_memory import sync_memory
 from route_ticket import route_ticket
 from schemas import Category, Priority, Teams, TicketOutput
 
@@ -35,6 +36,9 @@ correct_parser.add_argument("--category", type=Category, required=True, help="Co
 correct_parser.add_argument("--priority", type=Priority, required=True, help="Corrected priority.")
 correct_parser.add_argument("--team", type=Teams, required=True, help="Corrected team.")
 correct_parser.add_argument("--reasoning", required=True, help="Corrected reasoning.")
+
+#batch sync human-validated tickets into semantic memory (Phase 2)
+sync_memory_parser = subparser.add_parser("sync-memory", help="Batch sync human-validated tickets into semantic memory.")
 
 args = parser.parse_args()
 # confidence boost for tickets that are routed incorrectly due to low confidence
@@ -103,3 +107,11 @@ if args.command == "correct":
             print(f"Ticket {args.ticket_id} corrected and re-routed to {args.team.value}.")
     except Exception as e:
         print(f"Error correcting ticket {args.ticket_id}: {e}")
+
+# batch sync human-validated tickets into semantic memory
+if args.command == "sync-memory":
+    try:
+        count = sync_memory()
+        print(f"Synced {count} human-validated ticket(s) into semantic memory.")
+    except Exception as e:
+        print(f"Error syncing memory: {e}")
