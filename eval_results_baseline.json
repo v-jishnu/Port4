@@ -234,5 +234,73 @@
     "text": "something's wrong with my stuff",
     "passed": true,
     "note": "correctly rejected by guard"
+  },
+  {
+    "text": "This is ABSOLUTELY RIDICULOUS!! My package still hasn't updated in tracking for over a week and this is UNACCEPTABLE, I want an explanation NOW!",
+    "passed": true,
+    "expected": {
+      "category": "order_issue",
+      "priority": "medium",
+      "team": "fulfilment"
+    },
+    "actual": {
+      "category": "order_issue",
+      "priority": "medium",
+      "team": "fulfilment",
+      "confidence": 85
+    },
+    "high_confidence_miss": false,
+    "note": "same facts as a calm delayed-shipment ticket - angry tone must not inflate priority to high"
+  },
+  {
+    "text": "I'd like to cancel my order #5521 before it ships, if that's still possible.",
+    "passed": true,
+    "expected": {
+      "category": "order_issue",
+      "priority": "medium",
+      "team": "fulfilment"
+    },
+    "actual": {
+      "category": "order_issue",
+      "priority": "medium",
+      "team": "fulfilment",
+      "confidence": 90
+    },
+    "high_confidence_miss": false,
+    "note": "time-sensitive fulfilment request, not yet a loss or a broken item"
+  },
+  {
+    "text": "My promo code didn't apply at checkout and I was charged full price for my order.",
+    "passed": true,
+    "expected": {
+      "category": "billing_and_payment",
+      "priority": "high",
+      "team": "billing"
+    },
+    "actual": {
+      "category": "billing_and_payment",
+      "priority": "high",
+      "team": "billing",
+      "confidence": 92
+    },
+    "high_confidence_miss": false,
+    "note": "an active overcharge - financial loss already happened, same tier as a duplicate charge"
+  },
+  {
+    "text": "I can't log into my account after resetting my password twice, it just keeps rejecting the new password.",
+    "passed": true,
+    "expected": {
+      "category": "technical_support",
+      "priority": "high",
+      "team": "technical_support"
+    },
+    "actual": {
+      "category": "technical_support",
+      "priority": "high",
+      "team": "technical_support",
+      "confidence": 90
+    },
+    "high_confidence_miss": false,
+    "note": "account fully inaccessible - a clear high-priority technical_support case"
   }
 ]
