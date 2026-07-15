@@ -49,4 +49,24 @@ EVAL_CASES = [
     # too vague to be actionable - correctly the guard's job to reject, not the router's
     {"text": "something's wrong with my stuff", "expect_rejection": True,
      "note": "vague enough that the guard should reject it, per its own 'too vague' criterion"},
+
+    # angry / emotional tone - must route on facts, not tone
+    {"text": "This is ABSOLUTELY RIDICULOUS!! My package still hasn't updated in tracking for over a week and this is UNACCEPTABLE, I want an explanation NOW!",
+     "expected_category": "order_issue", "expected_priority": "medium", "expected_team": "fulfilment",
+     "note": "same facts as a calm delayed-shipment ticket - angry tone must not inflate priority to high"},
+
+    # order_issue: cancellation, a case not covered by the other two order_issue examples
+    {"text": "I'd like to cancel my order #5521 before it ships, if that's still possible.",
+     "expected_category": "order_issue", "expected_priority": "medium", "expected_team": "fulfilment",
+     "note": "time-sensitive fulfilment request, not yet a loss or a broken item"},
+
+    # billing_and_payment: promo/discount failure, distinct from the duplicate-charge and invoice cases already covered
+    {"text": "My promo code didn't apply at checkout and I was charged full price for my order.",
+     "expected_category": "billing_and_payment", "expected_priority": "high", "expected_team": "billing",
+     "note": "an active overcharge - financial loss already happened, same tier as a duplicate charge"},
+
+    # technical_support: account lockout, distinct from the app-crash and pairing-failure cases already covered
+    {"text": "I can't log into my account after resetting my password twice, it just keeps rejecting the new password.",
+     "expected_category": "technical_support", "expected_priority": "high", "expected_team": "technical_support",
+     "note": "account fully inaccessible - a clear high-priority technical_support case"},
 ]
