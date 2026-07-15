@@ -1,0 +1,238 @@
+[
+  {
+    "text": "My package was supposed to arrive last Tuesday but tracking hasn't updated since it left the warehouse.",
+    "passed": true,
+    "expected": {
+      "category": "order_issue",
+      "priority": "medium",
+      "team": "fulfilment"
+    },
+    "actual": {
+      "category": "order_issue",
+      "priority": "medium",
+      "team": "fulfilment",
+      "confidence": 92
+    },
+    "high_confidence_miss": false,
+    "note": ""
+  },
+  {
+    "text": "I opened the box and it's a completely different item than what I ordered.",
+    "passed": true,
+    "expected": {
+      "category": "order_issue",
+      "priority": "high",
+      "team": "fulfilment"
+    },
+    "actual": {
+      "category": "order_issue",
+      "priority": "high",
+      "team": "fulfilment",
+      "confidence": 95
+    },
+    "high_confidence_miss": false,
+    "note": ""
+  },
+  {
+    "text": "I was billed twice for the same order this month, please refund the duplicate charge.",
+    "passed": true,
+    "expected": {
+      "category": "billing_and_payment",
+      "priority": "high",
+      "team": "billing"
+    },
+    "actual": {
+      "category": "billing_and_payment",
+      "priority": "high",
+      "team": "billing",
+      "confidence": 96
+    },
+    "high_confidence_miss": false,
+    "note": ""
+  },
+  {
+    "text": "My invoice for last month's subscription shows an amount higher than what I signed up for.",
+    "passed": true,
+    "expected": {
+      "category": "billing_and_payment",
+      "priority": "medium",
+      "team": "billing"
+    },
+    "actual": {
+      "category": "billing_and_payment",
+      "priority": "medium",
+      "team": "billing",
+      "confidence": 90
+    },
+    "high_confidence_miss": false,
+    "note": ""
+  },
+  {
+    "text": "Does the Aria wool jacket run true to size or should I size up?",
+    "passed": true,
+    "expected": {
+      "category": "product_inquiry",
+      "priority": "low",
+      "team": "sales"
+    },
+    "actual": {
+      "category": "product_inquiry",
+      "priority": "low",
+      "team": "sales",
+      "confidence": 95
+    },
+    "high_confidence_miss": false,
+    "note": ""
+  },
+  {
+    "text": "Do you ship the Breville Barista espresso machine to Canada?",
+    "passed": true,
+    "expected": {
+      "category": "product_inquiry",
+      "priority": "low",
+      "team": "sales"
+    },
+    "actual": {
+      "category": "product_inquiry",
+      "priority": "low",
+      "team": "sales",
+      "confidence": 95
+    },
+    "high_confidence_miss": false,
+    "note": ""
+  },
+  {
+    "text": "The mobile app freezes every time I try to update my payment method in settings.",
+    "passed": false,
+    "expected": {
+      "category": "technical_support",
+      "priority": "high",
+      "team": "technical_support"
+    },
+    "actual": {
+      "category": "technical_support",
+      "priority": "medium",
+      "team": "technical_support",
+      "confidence": 85
+    },
+    "high_confidence_miss": false,
+    "note": ""
+  },
+  {
+    "text": "My smart watch won't pair with the app anymore after the last update.",
+    "passed": true,
+    "expected": {
+      "category": "technical_support",
+      "priority": "medium",
+      "team": "technical_support"
+    },
+    "actual": {
+      "category": "technical_support",
+      "priority": "medium",
+      "team": "technical_support",
+      "confidence": 85
+    },
+    "high_confidence_miss": false,
+    "note": ""
+  },
+  {
+    "text": "The blender I received arrived completely smashed, glass everywhere, I want a replacement.",
+    "passed": true,
+    "expected": {
+      "category": "order_issue",
+      "priority": "high",
+      "team": "fulfilment"
+    },
+    "actual": {
+      "category": "order_issue",
+      "priority": "high",
+      "team": "fulfilment",
+      "confidence": 95
+    },
+    "high_confidence_miss": false,
+    "note": "boundary rule 1: damaged-in-transit is order_issue even though customer wants a replacement"
+  },
+  {
+    "text": "The toaster arrived in perfect condition but it won't heat up at all.",
+    "passed": true,
+    "expected": {
+      "category": "technical_support",
+      "priority": "medium",
+      "team": "technical_support"
+    },
+    "actual": {
+      "category": "technical_support",
+      "priority": "medium",
+      "team": "technical_support",
+      "confidence": 85
+    },
+    "high_confidence_miss": false,
+    "note": "boundary rule 2: intact but broken is technical_support, not order_issue"
+  },
+  {
+    "text": "I was charged twice for my order last week, can you fix the duplicate charge?",
+    "passed": true,
+    "expected": {
+      "category": "billing_and_payment",
+      "priority": "high",
+      "team": "billing"
+    },
+    "actual": {
+      "category": "billing_and_payment",
+      "priority": "high",
+      "team": "billing",
+      "confidence": 96
+    },
+    "high_confidence_miss": false,
+    "note": "boundary rule 3a: payment dispute on an existing order is billing_and_payment"
+  },
+  {
+    "text": "Do you accept Afterpay for purchases?",
+    "passed": true,
+    "expected": {
+      "category": "product_inquiry",
+      "priority": "low",
+      "team": "sales"
+    },
+    "actual": {
+      "category": "product_inquiry",
+      "priority": "low",
+      "team": "sales",
+      "confidence": 95
+    },
+    "high_confidence_miss": false,
+    "note": "boundary rule 3b: payment method question with no existing order is product_inquiry"
+  },
+  {
+    "text": "I still haven't gotten my refund from last month and now the checkout page keeps freezing when I try to place a new order.",
+    "passed": true,
+    "expected": {
+      "category": "billing_and_payment",
+      "priority": "high",
+      "team": "billing"
+    },
+    "actual": {
+      "category": "billing_and_payment",
+      "priority": "high",
+      "team": "billing",
+      "confidence": 85
+    },
+    "high_confidence_miss": false,
+    "note": "multi-issue: refund (financial loss, higher priority) should win over the checkout bug"
+  },
+  {
+    "text": "",
+    "passed": true,
+    "note": "correctly rejected by guard"
+  },
+  {
+    "text": "asdkjhaskjdh aksjdh laksjdh",
+    "passed": true,
+    "note": "correctly rejected by guard"
+  },
+  {
+    "text": "something's wrong with my stuff",
+    "passed": true,
+    "note": "correctly rejected by guard"
+  }
+]

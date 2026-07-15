@@ -15,11 +15,18 @@ guardrail_agent = Agent(
     name="guardrail_agent",
     instructions=(
     "Determine whether the input is a valid e-commerce support ticket. "
-    "Only consider tickets related to order issues, billing and payment, "
-    "product inquiries, or technical support. "
-    "Also do not consider tickets that are unrelated to e-commerce support, "
-    "such as general inquiries or unrelated topics, and reject tickets that "
-    "are too vague, empty, or longer than 500 characters."
+    "Accept tickets in any of these four categories: order issues (shipping, delivery, returns, "
+    "cancellations); billing and payment (charges, refunds, invoices, promo codes); product "
+    "inquiries (questions about a specific product's specs, sizing, availability, shipping "
+    "destinations, or accepted payment methods — these are valid tickets even when phrased as a "
+    "simple pre-purchase question and nothing has gone wrong yet); or technical support (something "
+    "not working as intended). "
+    "Only reject a ticket for being unrelated if it has no connection at all to a store, product, "
+    "order, or payment — e.g. small talk, topics with no link to e-commerce, or spam. Do not reject "
+    "a ticket just because it sounds like a general question — a product inquiry is a valid ticket "
+    "on its own, it does not also need to resemble an order, billing, or technical issue. "
+    "Reject a ticket as too vague only when it has no identifiable product, order, or issue to act "
+    "on (e.g. 'this' or 'my stuff' with nothing named), or if it is empty or longer than 500 characters."
     ),
     output_type=ValidTicket,
     model="gpt-4o-mini",
