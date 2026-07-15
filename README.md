@@ -4,6 +4,8 @@
 
 **Stack:** Python 3.12 · [`openai-agents`](https://github.com/openai/openai-agents-python) SDK (`Agent`/`Runner`) · Pydantic v2 · SQLite · `python-dotenv` · `uv`. Model: `gpt-4o-mini` at **temperature 0**.
 
+**This document explains the architecture and the reasoning behind it — what's built, why it's built this way, and how the pieces fit together.** To actually see it running, with real captured output at every step, go to **[`DEMO.md`](DEMO.md)** first.
+
 ---
 
 ## The problem this solves
@@ -150,6 +152,8 @@ Human-in-the-loop operations, modelled directly as database transitions:
 
 ## Running it
 
+> For a guided walkthrough with real captured output at every step, see **[`DEMO.md`](DEMO.md)**. What follows here is the reference command list.
+
 **Prerequisites:** [`uv`](https://docs.astral.sh/uv/) and an OpenAI API key.
 
 ```bash
@@ -202,8 +206,10 @@ port4/
 ├── main.py              # FastAPI app — same six actions as HTTP endpoints
 ├── eval_dataset.py      # 20 labeled test cases (all 4 categories, boundary rules, multi-issue, edge cases)
 ├── eval_harness.py      # runs the eval set through route_ticket(), reports pass rate + high-confidence misses
+├── benchmark_timing.py  # measures real AI routing latency for the before/after time comparison
 ├── .env.example         # template for the required OPENAI_API_KEY (never commit .env)
 ├── pyproject.toml       # uv-managed, version-locked dependencies
+├── DEMO.md              # guided walkthrough with real captured output — start here to see it run
 ├── HANDOFF.md           # context-sync doc: what's built, what's left, known issues
 ├── CLI_GUIDE.md         # user-facing CLI command reference
 ├── PHASE_2.md           # semantic memory: concepts, architecture, code walkthrough
