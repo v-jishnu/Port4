@@ -108,12 +108,17 @@ uv run cli.py sync-memory
 Synced 2 human-validated ticket(s) into semantic memory.
 ```
 
-## 3. FastAPI
+## 3. FastAPI + web UI
+
+Everything above is also available without touching a terminal, in one command:
 
 ```bash
 uv run uvicorn main:app --reload
 ```
-Open `http://127.0.0.1:8000/docs` for a browsable Swagger UI, or call it directly:
+
+Open **`http://127.0.0.1:8000/`** for the web UI — submit a ticket, browse team queues (boost/flag/clear right from the list), review and correct the admin queue, and see the eval baseline / re-run it / run the timing benchmark, all from one page. Boosting or correcting a ticket here automatically syncs semantic memory in the background — no separate `sync-memory` step needed when using the UI. See `frontend/README.md` for what each screen does.
+
+Or open `http://127.0.0.1:8000/docs` for the raw Swagger API docs, or call it directly:
 
 ```bash
 curl -X POST http://127.0.0.1:8000/route -H "Content-Type: application/json" \
@@ -150,5 +155,6 @@ Worth noting honestly: which single case fails occasionally varies between runs 
 
 - **`README.md`** — architecture, data model, design decisions, and the full deliverables/rubric mapping.
 - **`CLI_GUIDE.md`** — every CLI command in detail.
+- **`frontend/README.md`** — what each screen in the web UI does and how it talks to the backend.
 - **`PHASE_2.md`** — semantic memory concepts, architecture, and code walkthrough.
 - **`HANDOFF.md`** — a running context-sync log of what's built and what's left.

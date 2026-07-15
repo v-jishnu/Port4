@@ -173,13 +173,16 @@ uv run cli.py correct <ticket_id> --category ... --priority ... --team ... --rea
 uv run cli.py sync-memory                                # batch-sync validated corrections into semantic memory
 ```
 
-**FastAPI** — the same six actions as HTTP endpoints, plus interactive docs:
+**FastAPI + web UI** — the same actions as HTTP endpoints, plus a minimal browsable frontend, both from one command:
 
 ```bash
 uv run uvicorn main:app --reload
-# then open http://127.0.0.1:8000/docs for a browsable Swagger UI,
-# or POST to /route, /team-queue, /admin-queue, /flagged/{id}, /boost_confidence, /route_to_admin
+# then open http://127.0.0.1:8000/         for the web UI (submit, team queues, admin, metrics)
+# or        http://127.0.0.1:8000/docs     for the raw Swagger API docs
+# or POST directly to /route, /team-queue, /admin-queue, /flagged/{id}, /boost_confidence, /route_to_admin, /clear/{id}
 ```
+
+The frontend (`frontend/`) is a dependency-free static site — no build step, no npm — served directly by `main.py`; see `frontend/README.md` for what each screen does.
 
 **Eval harness** — runs 20 labeled tickets through `route_ticket()` and reports pass rate, with high-confidence misses (confidently wrong — the failure mode that would never get caught by the confidence-review threshold) called out separately from other failures:
 
@@ -203,7 +206,8 @@ port4/
 ├── ticket_log.py        # SQLite persistence, team/admin queues, human-in-the-loop ops
 ├── semantic_memory.py   # Phase 2: embeddings, Chroma sync + retrieval
 ├── cli.py               # full CLI — submit/team-queue/admin-queue/flag/boost/correct/sync-memory
-├── main.py              # FastAPI app — same six actions as HTTP endpoints
+├── main.py              # FastAPI app — same actions as HTTP endpoints, serves frontend/ at "/"
+├── frontend/            # dependency-free HTML/CSS/JS web UI (index.html, styles.css, app.js)
 ├── eval_dataset.py      # 20 labeled test cases (all 4 categories, boundary rules, multi-issue, edge cases)
 ├── eval_harness.py      # runs the eval set through route_ticket(), reports pass rate + high-confidence misses
 ├── benchmark_timing.py  # measures real AI routing latency for the before/after time comparison
@@ -237,7 +241,7 @@ port4/
 |---|---|---|
 | 1 | Prompts that consistently return valid structured JSON | ✅ Structured Output + enums + Pydantic + temperature 0 |
 | 2 | Handle 3 edge cases (angry tone, very short, ambiguous) | ✅ see *Edge-case handling*; each has a dedicated case in `eval_dataset.py` |
-| 3 | A simple interface to test it | ✅ CLI (6 commands) · ✅ FastAPI (`POST /route` + Swagger `/docs`, matching endpoints for every CLI action) |
+| 3 | A simple interface to test it | ✅ CLI (6 commands) · ✅ FastAPI (`POST /route` + Swagger `/docs`) · ✅ a minimal web UI (`frontend/`, served at `/`) covering submit, team queues, admin corrections, and metrics |
 | 4 | Before/after: manual vs. AI routing time | ✅ measured AI time + a reasoned manual estimate — see *Before/after: routing time* below |
 | 5 | Demo 20 sample tickets | ✅ `eval_dataset.py` — 20 labeled cases across all 4 categories, the boundary rules, multi-issue handling, and guard rejection; `eval_harness.py` runs them and reports pass rate (baseline: see `eval_results_baseline.json`) |
 
@@ -251,6 +255,9 @@ port4/
 - **Phase 2 — retrieval-augmented memory, not model weight-learning.** Human-validated corrections only (`admin_corrected` / `confidence_boosted` rows, via `get_semantic_memory_candidates()`) are embedded and stored in Chroma. `sync_memory()` batch-syncs them — never mid-request, preserving the `temperature=0` consistency guarantee — and `retrieve_similar()` surfaces the closest matches (cosine distance ≤ 0.4) as dynamic few-shot context injected into the router prompt for future similar tickets. A ticket's stored `input` is force-set back to the original raw text in code after classification, so the injected reference block can never leak into what gets persisted. Full concepts, architecture, and code walkthrough in `PHASE_2.md`.
   - **Honest note on the eval number:** the baseline was captured with an *empty* memory — there's no real correction history yet for it to have learned from. The genuine before/after comparison happens once real `boost`/`correct` actions accumulate, `sync-memory` is run, and `eval_harness.py` is re-run against this same baseline file. Memory is never seeded from the eval set itself — doing so would let the system "memorize" its own test, invalidating the comparison.
   - **Honest note on the one recurring miss:** repeat runs occasionally disagree on one ticket's priority (`medium` vs. the labeled `high`) — category and team are always correct on it. `temperature=0` makes output deterministic *within* a single OpenAI request, but does not guarantee bit-exact determinism across separate API calls on a genuinely borderline case. This is a real, observed limit of the consistency guarantee, not something papered over.
+- **A minimal web UI** (`frontend/`) — a dependency-free static site (no build step, no npm) served directly by `main.py` at `/`. Covers every human-facing action: submit a ticket and see the live classification, browse each team's queue and boost/flag/clear tickets from it, review and correct the admin queue, and check the eval baseline / re-run it / run the timing benchmark / see a log breakdown, all from one page. Talks to the backend only through the existing HTTP endpoints — no logic duplicated from the CLI or `route_ticket()`. See `frontend/README.md`.
+  - **Clear (soft delete)** is a new capability added alongside the UI: `clear_ticket()` sets `status='cleared'`, removing a ticket from its team's queue without deleting the row — the full record (and its `source` provenance) stays intact for the audit trail and for semantic memory eligibility.
+  - **Boosting or correcting a ticket from the UI/API now auto-triggers a background `sync_memory()` call** — a deliberate UX difference from the CLI, where `sync-memory` stays a separate, manual command. The underlying sync is still the same batch/upsert operation either way; only *what triggers it* differs, so a mentor demoing the UI sees memory actually grow without needing to know a separate command exists.
 
 ## Before/after: routing time
 
@@ -268,4 +275,3 @@ Measured average: **~4.2 seconds per ticket** (sequential API round-trips for th
 
 **Deferred by design:**
 - Team-to-team hand-off for multi-issue tickets — the router already classifies by highest-priority issue and names the secondary issue in `reasoning`; the actual hand-off *workflow* is scoped for later, since it's a UI/process feature, not a classification gap.
-- A small UI beyond the CLI/Swagger docs — explicitly a "towards the end" item, not started.

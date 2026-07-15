@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Smart Ticket Router</title>
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">Smart Ticket Router</div>
+  <nav class="tabs">
+    <button class="tab-btn active" data-tab="submit">Submit</button>
+    <button class="tab-btn" data-tab="teams">Team Queues</button>
+    <button class="tab-btn" data-tab="admin">Admin</button>
+    <button class="tab-btn" data-tab="metrics">Metrics</button>
+  </nav>
+</header>
+
+<main class="content">
+
+  <!-- SUBMIT -->
+  <section id="tab-submit" class="tab-panel active">
+    <div class="panel-card">
+      <h1>Submit a ticket</h1>
+      <p class="muted">Type a support message the way a customer would. It's validated, classified, and logged.</p>
+      <textarea id="ticket-input" rows="4" placeholder="e.g. My order never arrived and it's been two weeks..."></textarea>
+      <button id="submit-btn" class="primary-btn">Route Ticket</button>
+      <div id="submit-result" class="result-area"></div>
+    </div>
+  </section>
+
+  <!-- TEAM QUEUES -->
+  <section id="tab-teams" class="tab-panel">
+    <div class="panel-card">
+      <div class="panel-header-row">
+        <h1>Team queues</h1>
+        <select id="team-select">
+          <option value="fulfilment">Fulfilment</option>
+          <option value="billing">Billing</option>
+          <option value="sales">Sales</option>
+          <option value="technical_support">Technical Support</option>
+        </select>
+      </div>
+      <p class="muted">Tickets currently routed to the selected team.</p>
+      <div id="team-queue-list" class="ticket-list"></div>
+    </div>
+  </section>
+
+  <!-- ADMIN -->
+  <section id="tab-admin" class="tab-panel">
+    <div class="panel-card">
+      <h1>Admin queue</h1>
+      <p class="muted">Tickets a team flagged as wrong or not theirs. Correct the classification and it re-routes automatically.</p>
+      <div id="admin-queue-list" class="ticket-list"></div>
+    </div>
+  </section>
+
+  <!-- METRICS -->
+  <section id="tab-metrics" class="tab-panel">
+    <div class="panel-card">
+      <h1>Eval baseline</h1>
+      <p class="muted">Accuracy on the 20-case labeled test set.</p>
+      <div id="eval-summary" class="stat-row"></div>
+      <button id="eval-run-btn" class="secondary-btn">Re-run eval now (~20 live calls)</button>
+      <div id="eval-details" class="result-area"></div>
+    </div>
+
+    <div class="panel-card">
+      <h1>Routing time benchmark</h1>
+      <p class="muted">Measured AI routing latency, end to end (guard + retrieval + router + logging).</p>
+      <button id="benchmark-run-btn" class="secondary-btn">Run benchmark (5 tickets)</button>
+      <div id="benchmark-result" class="result-area"></div>
+    </div>
+
+    <div class="panel-card">
+      <h1>Unified log</h1>
+      <p class="muted">Every ticket ever routed, across every status.</p>
+      <div id="log-summary" class="stat-row"></div>
+    </div>
+  </section>
+
+</main>
+
+<script src="app.js"></script>
+</body>
+</html>

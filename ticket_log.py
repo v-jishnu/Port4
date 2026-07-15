@@ -78,6 +78,18 @@ def flag_to_admin(ticket_id: str) -> None:
         )
 
 
+def clear_ticket(ticket_id: str) -> None:
+    """A team dismisses a ticket from their active queue without deleting
+    the record - a soft delete. status='cleared' is permanently excluded
+    from get_team_queue (which only ever selects status='routed')."""
+    now = datetime.now(timezone.utc).isoformat()
+    with get_connection() as conn:
+        conn.execute(
+            "UPDATE tickets SET status = ?, updated_at = ? WHERE id = ?",
+            ("cleared", now, ticket_id),
+        )
+
+
 def boost_confidence(ticket_id: str, new_confidence: int = 90) -> None:
     """A team confirms a low-confidence route was actually correct.
     Status is left untouched (the ticket was already 'routed' and stays
