@@ -158,6 +158,16 @@ def get_admin_queue() -> list[dict]:
         ).fetchall()
     return [dict(row) for row in rows]
 
+def get_ticket_by_id(ticket_id: str) -> dict | None:
+    """Look up one specific ticket by id, e.g. so admin can correct it
+    without retyping the original ticket text."""
+    with get_connection() as conn:
+        row = conn.execute(
+            "SELECT * FROM tickets WHERE id = ?",
+            (ticket_id,),
+        ).fetchone()
+    return dict(row) if row else None
+
 def get_semantic_memory_candidates() -> list[dict]:
     """Rows a human has actually validated — the only source Phase 2 should
     learn from. Filtered purely by `source`, independent of current status,
